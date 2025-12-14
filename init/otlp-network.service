@@ -1,0 +1,13 @@
+[Unit]
+Description=otlp-network exporter
+After=network.target
+
+[Service]
+Type=simple
+User=otlp-network
+ExecStart=/usr/bin/otlp-network
+Restart=always
+RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target

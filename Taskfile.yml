@@ -27,3 +27,8 @@ tasks:
   validate:
     desc: Run all checks
     deps: [lint, test, build]
+
+  package:
+    desc: Package the application
+    cmds:
+      - goreleaser release --snapshot --clean

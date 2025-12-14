@@ -1,30 +1,92 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"os"
+	"time"
 
+	"os/signal"
+	"path/filepath"
+	"syscall"
+
+	"github.com/adrg/xdg"
+	"github.com/andrewhowdencom/otlp.network/internal/collector"
+	"github.com/andrewhowdencom/otlp.network/internal/server"
+	"github.com/andrewhowdencom/otlp.network/internal/telemetry"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
 var cfgFile string
+var Version = "dev"
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "otlp-network",
-	Short: "An exporter that exports Network statistics from the end (Linux) device",
+	Use:     "otlp-network",
+	Version: Version,
+	Short:   "An exporter that exports Network statistics from the end (Linux) device",
 	Long: `otlp-network is a CLI application that exports network statistics
 from the Linux device it is running on.`,
-	// Uncomment the following line if your bare application
-	// has an action associated with it:
-	// Run: func(cmd *cobra.Command, args []string) { },
+	RunE: func(cmd *cobra.Command, args []string) error {
+		// Initialize telemetry
+		shutdown, err := telemetry.Setup(cmd.Context(), telemetry.Config{
+			ServiceName:    "otlp-network",
+			ServiceVersion: Version,
+			Endpoint:       viper.GetString("otel.endpoint"),
+			Insecure:       viper.GetBool("otel.insecure"),
+			Interval:       viper.GetDuration("otel.interval"),
+		})
+		if err != nil {
+			return err
+		}
+		// Ensure telemetry is shut down when the application exits
+		defer func() {
+			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			defer cancel()
+			if err := shutdown(ctx); err != nil {
+				fmt.Fprintf(os.Stderr, "failed to shutdown telemetry: %v\n", err)
+			}
+		}()
+
+		// Start Uptime Collector
+		uptime := collector.NewUptime()
+		if err := uptime.Start(cmd.Context()); err != nil {
+			return err
+		}
+
+		// Start Prometheus Metrics Server
+		srv, err := server.New(viper.GetString("prometheus.host"), viper.GetInt("prometheus.port"))
+		if err != nil {
+			return err
+		}
+		if err := srv.Start(); err != nil {
+			return err
+		}
+
+		// Wait for context cancellation (SIGINT/SIGTERM)
+		<-cmd.Context().Done()
+		fmt.Println("shutting down...")
+
+		// Graceful shutdown for the server
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		if err := srv.Shutdown(ctx); err != nil {
+			return err
+		}
+
+		return nil
+	},
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
-	err := rootCmd.Execute()
+	// Create a cancellable context for graceful shutdown
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer cancel()
+
+	err := rootCmd.ExecuteContext(ctx)
 	if err != nil {
 		os.Exit(1)
 	}
@@ -37,7 +99,19 @@ func init() {
 	// Cobra supports persistent flags, which, if defined here,
 	// will be global for your application.
 
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.otlp-network.yaml)")
+	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $XDG_CONFIG_HOME/otlp-network/otlp-network.yaml)")
+
+	rootCmd.PersistentFlags().String("otel.endpoint", "", "OpenTelemetry exporter endpoint (HTTP)")
+	rootCmd.PersistentFlags().Bool("otel.insecure", true, "Use insecure connection for OpenTelemetry")
+	rootCmd.PersistentFlags().Duration("otel.interval", 60*time.Second, "OpenTelemetry export interval")
+	rootCmd.PersistentFlags().String("prometheus.host", "", "Host to expose Prometheus metrics (empty for all interfaces)")
+	rootCmd.PersistentFlags().Int("prometheus.port", 9464, "Port for Prometheus metrics")
+
+	viper.BindPFlag("otel.endpoint", rootCmd.PersistentFlags().Lookup("otel.endpoint"))
+	viper.BindPFlag("otel.insecure", rootCmd.PersistentFlags().Lookup("otel.insecure"))
+	viper.BindPFlag("otel.interval", rootCmd.PersistentFlags().Lookup("otel.interval"))
+	viper.BindPFlag("prometheus.host", rootCmd.PersistentFlags().Lookup("prometheus.host"))
+	viper.BindPFlag("prometheus.port", rootCmd.PersistentFlags().Lookup("prometheus.port"))
 
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
@@ -50,14 +124,26 @@ func initConfig() {
 		// Use config file from the flag.
 		viper.SetConfigFile(cfgFile)
 	} else {
-		// Find home directory.
-		home, err := os.UserHomeDir()
-		cobra.CheckErr(err)
+		// Search for config in XDG directories and system directories.
+		// 1. User config: $XDG_CONFIG_HOME/otlp-network/otlp-network.yaml
+		// 2. System config: $XDG_CONFIG_DIRS/otlp-network/otlp-network.yaml
+		// 3. Fallback: /etc/otlp-network/otlp-network.yaml
+		// 4. Fallback: ./otlp-network.yaml
 
-		// Search config in home directory with name ".otlp-network" (without extension).
-		viper.AddConfigPath(home)
+		viper.SetConfigName("otlp-network")
 		viper.SetConfigType("yaml")
-		viper.SetConfigName(".otlp-network")
+
+		// 1. User configuration directory
+		viper.AddConfigPath(filepath.Join(xdg.ConfigHome, "otlp-network"))
+
+		// 2. System configuration directories
+		for _, dir := range xdg.ConfigDirs {
+			viper.AddConfigPath(filepath.Join(dir, "otlp-network"))
+		}
+
+		// 3. Fallbacks
+		viper.AddConfigPath("/etc/otlp-network")
+		viper.AddConfigPath(".")
 	}
 
 	viper.AutomaticEnv() // read in environment variables that match

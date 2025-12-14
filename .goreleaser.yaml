@@ -1,0 +1,29 @@
+version: 2
+
+project_name: otlp-network
+
+builds:
+  - env:
+      - CGO_ENABLED=0
+    ldflags:
+      - -X github.com/andrewhowdencom/otlp.network/cmd/otlp-network/cmd.Version={{.Version}}
+    goos:
+      - linux
+    goarch:
+      - amd64
+      - arm64
+    main: ./cmd/otlp-network
+
+nfpms:
+  - maintainer: Andrew Howden <hello@andrewhowden.com>
+    description: An exporter that exports Network statistics from the end (Linux) device
+    homepage: https://github.com/andrewhowdencom/otlp.network
+    license: Apache 2.0
+    formats:
+      - deb
+    contents:
+      - src: ./init/otlp-network.service
+        dst: /lib/systemd/system/otlp-network.service
+
+snapshot:
+  version_template: "{{ .Tag }}-next"
