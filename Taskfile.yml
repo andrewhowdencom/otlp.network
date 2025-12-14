@@ -1,0 +1,29 @@
+version: '3'
+
+tasks:
+  setup:
+    desc: Install dependencies
+    cmds:
+      - go mod download
+
+  build:
+    desc: Build the application
+    cmds:
+      - go build -o bin/otlp-network ./cmd/otlp-network
+
+  test:
+    desc: Run tests
+    cmds:
+      - go test ./...
+
+  lint:
+    desc: Run linters
+    cmds:
+      # Use golangci-lint if installed, otherwise fallback to go vet
+      - cmd: golangci-lint run
+        ignore_error: true
+      - go vet ./...
+
+  validate:
+    desc: Run all checks
+    deps: [lint, test, build]
