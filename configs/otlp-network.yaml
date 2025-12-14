@@ -1,0 +1,79 @@
+# OTLP Network Configuration File
+# This file configures the otlp-network agent.
+# It is searched for in:
+# 1. $XDG_CONFIG_HOME/otlp-network/otlp-network.yaml
+# 2. $XDG_CONFIG_DIRS/otlp-network/otlp-network.yaml
+# 3. /etc/otlp-network/otlp-network.yaml
+# 4. ./otlp-network.yaml
+
+# ------------------------------------------------------------------------------
+# General Settings
+# ------------------------------------------------------------------------------
+
+# Service Name for OpenTelemetry (default: otlp-network)
+# service_name: "otlp-network"
+
+# Service Version for OpenTelemetry (default: 0.1.0)
+# service_version: "0.1.0"
+
+# ------------------------------------------------------------------------------
+# Telemetry Export
+# ------------------------------------------------------------------------------
+
+# OTLP Endpoint (e.g., "localhost:4318").
+# If left empty, only Prometheus metrics are exposed.
+# endpoint: ""
+
+# Use insecure connection (HTTP) for OTLP export (default: true)
+# insecure: true
+
+# Interval in seconds for OTLP export (default: 10s)
+# interval: "10s"
+
+# Prometheus Host for scraping metrics (default: 127.0.0.1)
+# prometheus_host: "127.0.0.1"
+
+# Prometheus Port (default: 9464)
+# prometheus_port: 9464
+
+# ------------------------------------------------------------------------------
+# Collectors
+# ------------------------------------------------------------------------------
+# Enable or disable specific network collectors.
+# All collectors are enabled by default.
+
+collector:
+  device:
+    # Collects per-interface I/O bytes, packets, and errors.
+    # Metrics: device.io, device.packets, device.errors, device.dropped
+    enabled: true
+
+  wifi:
+    # Collects per-interface Wifi signal strength and quality.
+    # Metrics: wifi.signal, wifi.quality
+    enabled: true
+
+  tcp:
+    # Collects global TCP connection states and retransmissions.
+    # Metrics: tcp.connection.current, tcp.connection.total, tcp.retransmit
+    enabled: true
+
+  udp:
+    # Collects global UDP packet counts and drops.
+    # Metrics: udp.packets, udp.drops
+    enabled: true
+
+  conntrack:
+    # Collects connection tracking table entries and limits.
+    # Metrics: conntrack.entries, conntrack.limit
+    enabled: true
+
+  softnet:
+    # Collects softnet processing statistics (processed, dropped, squeezed).
+    # Metrics: softnet.processed, softnet.dropped, softnet.squeezed
+    enabled: true
+
+  sockstat:
+    # Collects socket usage statistics (used, tcp inuse, udp inuse).
+    # Metrics: sockets.used, sockets.tcp.inuse, sockets.udp.inuse
+    enabled: true

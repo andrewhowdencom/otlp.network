@@ -57,7 +57,7 @@ from the Linux device it is running on.`,
 
 		// Device Collector
 		if viper.GetBool("collector.device.enabled") {
-			c, err := collector.NewDevice()
+			c, err := collector.NewDevice("/proc")
 			if err != nil {
 				return err
 			}
@@ -68,7 +68,7 @@ from the Linux device it is running on.`,
 
 		// Wifi Collector
 		if viper.GetBool("collector.wifi.enabled") {
-			c, err := collector.NewWifi()
+			c, err := collector.NewWifi("/proc")
 			if err != nil {
 				return err
 			}
@@ -79,7 +79,7 @@ from the Linux device it is running on.`,
 
 		// TCP Collector
 		if viper.GetBool("collector.tcp.enabled") {
-			c, err := collector.NewTCP()
+			c, err := collector.NewTCP("/proc")
 			if err != nil {
 				return err
 			}
@@ -90,7 +90,7 @@ from the Linux device it is running on.`,
 
 		// UDP Collector
 		if viper.GetBool("collector.udp.enabled") {
-			c, err := collector.NewUDP()
+			c, err := collector.NewUDP("/proc")
 			if err != nil {
 				return err
 			}
@@ -101,7 +101,7 @@ from the Linux device it is running on.`,
 
 		// Conntrack Collector
 		if viper.GetBool("collector.conntrack.enabled") {
-			c, err := collector.NewConntrack()
+			c, err := collector.NewConntrack("/proc")
 			if err != nil {
 				return err
 			}
@@ -112,7 +112,7 @@ from the Linux device it is running on.`,
 
 		// Softnet Collector
 		if viper.GetBool("collector.softnet.enabled") {
-			c, err := collector.NewSoftnet()
+			c, err := collector.NewSoftnet("/proc")
 			if err != nil {
 				return err
 			}
@@ -123,7 +123,7 @@ from the Linux device it is running on.`,
 
 		// Sockstat Collector
 		if viper.GetBool("collector.sockstat.enabled") {
-			c, err := collector.NewSockstat()
+			c, err := collector.NewSockstat("/proc")
 			if err != nil {
 				return err
 			}
@@ -184,13 +184,14 @@ func init() {
 	rootCmd.PersistentFlags().String("prometheus.host", "", "Host to expose Prometheus metrics (empty for all interfaces)")
 	rootCmd.PersistentFlags().Int("prometheus.port", 9464, "Port for Prometheus metrics")
 
-	rootCmd.PersistentFlags().Bool("collector.device.enabled", false, "Enable device collector")
-	rootCmd.PersistentFlags().Bool("collector.wifi.enabled", false, "Enable wifi collector")
-	rootCmd.PersistentFlags().Bool("collector.tcp.enabled", false, "Enable tcp collector")
-	rootCmd.PersistentFlags().Bool("collector.udp.enabled", false, "Enable udp collector")
-	rootCmd.PersistentFlags().Bool("collector.conntrack.enabled", false, "Enable conntrack collector")
-	rootCmd.PersistentFlags().Bool("collector.softnet.enabled", false, "Enable softnet collector")
-	rootCmd.PersistentFlags().Bool("collector.sockstat.enabled", false, "Enable sockstat collector")
+	// Collector flags
+	rootCmd.Flags().Bool("collector.device.enabled", true, "Enable device collector")
+	rootCmd.Flags().Bool("collector.wifi.enabled", true, "Enable wifi collector")
+	rootCmd.Flags().Bool("collector.tcp.enabled", true, "Enable tcp collector")
+	rootCmd.Flags().Bool("collector.udp.enabled", true, "Enable udp collector")
+	rootCmd.Flags().Bool("collector.conntrack.enabled", true, "Enable conntrack collector")
+	rootCmd.Flags().Bool("collector.softnet.enabled", true, "Enable softnet collector")
+	rootCmd.Flags().Bool("collector.sockstat.enabled", true, "Enable sockstat collector")
 
 	viper.BindPFlag("otel.endpoint", rootCmd.PersistentFlags().Lookup("otel.endpoint"))
 	viper.BindPFlag("otel.insecure", rootCmd.PersistentFlags().Lookup("otel.insecure"))

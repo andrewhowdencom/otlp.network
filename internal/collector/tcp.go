@@ -11,20 +11,22 @@ import (
 
 // TCP collector exposes TCP protocol statistics.
 type TCP struct {
-	meter metric.Meter
-	fs    procfs.FS
+	meter          metric.Meter
+	fs             procfs.FS
+	procMountPoint string
 }
 
 // NewTCP creates a new TCP collector.
-func NewTCP() (*TCP, error) {
-	fs, err := procfs.NewFS("/proc")
+func NewTCP(procMountPoint string) (*TCP, error) {
+	fs, err := procfs.NewFS(procMountPoint)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open procfs: %w", err)
 	}
 
 	return &TCP{
-		meter: otel.Meter("github.com/andrewhowdencom/otlp.network/internal/collector"),
-		fs:    fs,
+		meter:          otel.Meter("github.com/andrewhowdencom/otlp.network/internal/collector"),
+		fs:             fs,
+		procMountPoint: procMountPoint,
 	}, nil
 }
 
@@ -56,7 +58,7 @@ func (c *TCP) Start(ctx context.Context) error {
 	}
 
 	_, err = c.meter.RegisterCallback(func(_ context.Context, o metric.Observer) error {
-		snmp, err := readNetSNMP("/proc")
+		snmp, err := readNetSNMP(c.procMountPoint)
 		if err != nil {
 			return fmt.Errorf("failed to read net snmp: %w", err)
 		}

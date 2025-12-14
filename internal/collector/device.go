@@ -18,8 +18,8 @@ type Device struct {
 }
 
 // NewDevice creates a new Device collector.
-func NewDevice() (*Device, error) {
-	fs, err := procfs.NewFS("/proc")
+func NewDevice(procMountPoint string) (*Device, error) {
+	fs, err := procfs.NewFS(procMountPoint)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open procfs: %w", err)
 	}

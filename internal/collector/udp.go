@@ -12,20 +12,22 @@ import (
 
 // UDP collector exposes UDP protocol statistics.
 type UDP struct {
-	meter metric.Meter
-	fs    procfs.FS
+	meter          metric.Meter
+	fs             procfs.FS
+	procMountPoint string
 }
 
 // NewUDP creates a new UDP collector.
-func NewUDP() (*UDP, error) {
-	fs, err := procfs.NewFS("/proc")
+func NewUDP(procMountPoint string) (*UDP, error) {
+	fs, err := procfs.NewFS(procMountPoint)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open procfs: %w", err)
 	}
 
 	return &UDP{
-		meter: otel.Meter("github.com/andrewhowdencom/otlp.network/internal/collector"),
-		fs:    fs,
+		meter:          otel.Meter("github.com/andrewhowdencom/otlp.network/internal/collector"),
+		fs:             fs,
+		procMountPoint: procMountPoint,
 	}, nil
 }
 
@@ -48,7 +50,7 @@ func (c *UDP) Start(ctx context.Context) error {
 	}
 
 	_, err = c.meter.RegisterCallback(func(_ context.Context, o metric.Observer) error {
-		snmp, err := readNetSNMP("/proc")
+		snmp, err := readNetSNMP(c.procMountPoint)
 		if err != nil {
 			return fmt.Errorf("failed to read net snmp: %w", err)
 		}

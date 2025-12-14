@@ -16,8 +16,8 @@ type Sockstat struct {
 }
 
 // NewSockstat creates a new Sockstat collector.
-func NewSockstat() (*Sockstat, error) {
-	fs, err := procfs.NewFS("/proc")
+func NewSockstat(procMountPoint string) (*Sockstat, error) {
+	fs, err := procfs.NewFS(procMountPoint)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open procfs: %w", err)
 	}

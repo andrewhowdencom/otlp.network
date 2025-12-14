@@ -17,8 +17,8 @@ type Wifi struct {
 }
 
 // NewWifi creates a new Wifi collector.
-func NewWifi() (*Wifi, error) {
-	fs, err := procfs.NewFS("/proc")
+func NewWifi(procMountPoint string) (*Wifi, error) {
+	fs, err := procfs.NewFS(procMountPoint)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open procfs: %w", err)
 	}

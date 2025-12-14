@@ -11,20 +11,22 @@ import (
 
 // Conntrack collector exposes connection tracking statistics.
 type Conntrack struct {
-	meter metric.Meter
-	fs    procfs.FS
+	meter          metric.Meter
+	fs             procfs.FS
+	procMountPoint string
 }
 
 // NewConntrack creates a new Conntrack collector.
-func NewConntrack() (*Conntrack, error) {
-	fs, err := procfs.NewFS("/proc")
+func NewConntrack(procMountPoint string) (*Conntrack, error) {
+	fs, err := procfs.NewFS(procMountPoint)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open procfs: %w", err)
 	}
 
 	return &Conntrack{
-		meter: otel.Meter("github.com/andrewhowdencom/otlp.network/internal/collector"),
-		fs:    fs,
+		meter:          otel.Meter("github.com/andrewhowdencom/otlp.network/internal/collector"),
+		fs:             fs,
+		procMountPoint: procMountPoint,
 	}, nil
 }
 
@@ -80,13 +82,13 @@ func (c *Conntrack) Start(ctx context.Context) error {
 
 func (c *Conntrack) readSysctl(o metric.Observer, entries, limit metric.Int64ObservableGauge) error {
 	// Read count
-	count, err := readFileInt("/proc/sys/net/netfilter/nf_conntrack_count")
+	count, err := readFileInt(c.procMountPoint + "/sys/net/netfilter/nf_conntrack_count")
 	if err == nil {
 		o.ObserveInt64(entries, count)
 	}
 
 	// Read max
-	max, err := readFileInt("/proc/sys/net/netfilter/nf_conntrack_max")
+	max, err := readFileInt(c.procMountPoint + "/sys/net/netfilter/nf_conntrack_max")
 	if err == nil {
 		o.ObserveInt64(limit, max)
 	}

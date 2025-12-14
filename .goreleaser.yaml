@@ -22,6 +22,9 @@ nfpms:
     formats:
       - deb
     contents:
+      - src: configs/otlp-network.yaml
+        dst: /etc/otlp-network/otlp-network.yaml
+        type: config
       - src: ./init/otlp-network.service
         dst: /lib/systemd/system/otlp-network.service
 

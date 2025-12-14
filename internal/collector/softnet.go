@@ -16,8 +16,8 @@ type Softnet struct {
 }
 
 // NewSoftnet creates a new Softnet collector.
-func NewSoftnet() (*Softnet, error) {
-	fs, err := procfs.NewFS("/proc")
+func NewSoftnet(procMountPoint string) (*Softnet, error) {
+	fs, err := procfs.NewFS(procMountPoint)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open procfs: %w", err)
 	}
