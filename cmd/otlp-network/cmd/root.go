@@ -49,10 +49,87 @@ from the Linux device it is running on.`,
 			}
 		}()
 
-		// Start Uptime Collector
+		// Start Uptime Collector (Always enabled for now, or could match others)
 		uptime := collector.NewUptime()
 		if err := uptime.Start(cmd.Context()); err != nil {
 			return err
+		}
+
+		// Device Collector
+		if viper.GetBool("collector.device.enabled") {
+			c, err := collector.NewDevice()
+			if err != nil {
+				return err
+			}
+			if err := c.Start(cmd.Context()); err != nil {
+				return err
+			}
+		}
+
+		// Wifi Collector
+		if viper.GetBool("collector.wifi.enabled") {
+			c, err := collector.NewWifi()
+			if err != nil {
+				return err
+			}
+			if err := c.Start(cmd.Context()); err != nil {
+				return err
+			}
+		}
+
+		// TCP Collector
+		if viper.GetBool("collector.tcp.enabled") {
+			c, err := collector.NewTCP()
+			if err != nil {
+				return err
+			}
+			if err := c.Start(cmd.Context()); err != nil {
+				return err
+			}
+		}
+
+		// UDP Collector
+		if viper.GetBool("collector.udp.enabled") {
+			c, err := collector.NewUDP()
+			if err != nil {
+				return err
+			}
+			if err := c.Start(cmd.Context()); err != nil {
+				return err
+			}
+		}
+
+		// Conntrack Collector
+		if viper.GetBool("collector.conntrack.enabled") {
+			c, err := collector.NewConntrack()
+			if err != nil {
+				return err
+			}
+			if err := c.Start(cmd.Context()); err != nil {
+				return err
+			}
+		}
+
+		// Softnet Collector
+		if viper.GetBool("collector.softnet.enabled") {
+			c, err := collector.NewSoftnet()
+			if err != nil {
+				return err
+			}
+			if err := c.Start(cmd.Context()); err != nil {
+				return err
+			}
+		}
+
+		// Sockstat Collector
+		if viper.GetBool("collector.sockstat.enabled") {
+			c, err := collector.NewSockstat()
+			if err != nil {
+				return err
+			}
+			if err := c.Start(cmd.Context()); err != nil {
+				return err
+			}
 		}
 
 		// Start Prometheus Metrics Server
@@ -107,11 +184,27 @@ func init() {
 	rootCmd.PersistentFlags().String("prometheus.host", "", "Host to expose Prometheus metrics (empty for all interfaces)")
 	rootCmd.PersistentFlags().Int("prometheus.port", 9464, "Port for Prometheus metrics")
 
+	rootCmd.PersistentFlags().Bool("collector.device.enabled", false, "Enable device collector")
+	rootCmd.PersistentFlags().Bool("collector.wifi.enabled", false, "Enable wifi collector")
+	rootCmd.PersistentFlags().Bool("collector.tcp.enabled", false, "Enable tcp collector")
+	rootCmd.PersistentFlags().Bool("collector.udp.enabled", false, "Enable udp collector")
+	rootCmd.PersistentFlags().Bool("collector.conntrack.enabled", false, "Enable conntrack collector")
+	rootCmd.PersistentFlags().Bool("collector.softnet.enabled", false, "Enable softnet collector")
+	rootCmd.PersistentFlags().Bool("collector.sockstat.enabled", false, "Enable sockstat collector")
+
 	viper.BindPFlag("otel.endpoint", rootCmd.PersistentFlags().Lookup("otel.endpoint"))
 	viper.BindPFlag("otel.insecure", rootCmd.PersistentFlags().Lookup("otel.insecure"))
 	viper.BindPFlag("otel.interval", rootCmd.PersistentFlags().Lookup("otel.interval"))
 	viper.BindPFlag("prometheus.host", rootCmd.PersistentFlags().Lookup("prometheus.host"))
 	viper.BindPFlag("prometheus.port", rootCmd.PersistentFlags().Lookup("prometheus.port"))
+
+	viper.BindPFlag("collector.device.enabled", rootCmd.PersistentFlags().Lookup("collector.device.enabled"))
+	viper.BindPFlag("collector.wifi.enabled", rootCmd.PersistentFlags().Lookup("collector.wifi.enabled"))
+	viper.BindPFlag("collector.tcp.enabled", rootCmd.PersistentFlags().Lookup("collector.tcp.enabled"))
+	viper.BindPFlag("collector.udp.enabled", rootCmd.PersistentFlags().Lookup("collector.udp.enabled"))
+	viper.BindPFlag("collector.conntrack.enabled", rootCmd.PersistentFlags().Lookup("collector.conntrack.enabled"))
+	viper.BindPFlag("collector.softnet.enabled", rootCmd.PersistentFlags().Lookup("collector.softnet.enabled"))
+	viper.BindPFlag("collector.sockstat.enabled", rootCmd.PersistentFlags().Lookup("collector.sockstat.enabled"))
 
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
