@@ -25,6 +25,9 @@ nfpms:
       - src: configs/otlp-network.yaml
         dst: /etc/otlp-network/otlp-network.yaml
         type: config
+      - src: configs/prometheus-scrape.yaml
+        dst: /etc/prometheus/scrape_configs/otlp-network.yaml
+        type: config
       - src: ./init/otlp-network.service
         dst: /lib/systemd/system/otlp-network.service
 

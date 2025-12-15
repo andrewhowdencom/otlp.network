@@ -1,0 +1,7 @@
+# Prometheus scrape configuration for otlp-network
+# Installed to /etc/prometheus/scrape_configs/otlp-network.yaml
+
+- job_name: 'otlp-network'
+  scrape_interval: 15s
+  static_configs:
+    - targets: ['localhost:9464']
