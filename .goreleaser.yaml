@@ -31,5 +31,8 @@ nfpms:
       - src: ./init/otlp-network.service
         dst: /lib/systemd/system/otlp-network.service
 
+    scripts:
+      postinstall: scripts/postinstall.sh
+
 snapshot:
   version_template: "{{ .Tag }}-next"
