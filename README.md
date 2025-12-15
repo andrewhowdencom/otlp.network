@@ -65,4 +65,4 @@ curl http://localhost:9464/metrics
 
 ### Metrics
 
-- `uptime`: The uptime of the application in seconds (Counter).
+See [OTLP.md](OTLP.md) for a comprehensive list of all exposed metrics and their attributes.
